@@ -25,6 +25,15 @@ class AuthServiceReturnUriTests {
     }
 
     @Test
+    void kakaoAuthorizeUriRequestsKoreanConsentScreen() {
+        AuthService service = authService();
+
+        var uri = service.kakaoAuthorizeUri("http://52.79.233.46/wayt/auth/kakao");
+
+        assertThat(uri.getQuery()).contains("lang=ko");
+    }
+
+    @Test
     void kakaoAuthorizeUriRejectsUnexpectedWebReturnUri() {
         AuthService service = authService();
 

@@ -18,15 +18,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
             from Participant p
             where p.userAccount = :user
               and p.membershipStatus = com.wayt.domain.ParticipantMembershipStatus.ACTIVE
-              and (:from is null or p.appointment.scheduledAt >= :from)
-              and (:to is null or p.appointment.scheduledAt < :to)
             order by p.appointment.scheduledAt asc
             """)
-    List<Appointment> findForUser(
-            @Param("user") UserAccount user,
-            @Param("from") OffsetDateTime from,
-            @Param("to") OffsetDateTime to
-    );
+    List<Appointment> findForUser(@Param("user") UserAccount user);
 
     @Query("""
             select p.appointment

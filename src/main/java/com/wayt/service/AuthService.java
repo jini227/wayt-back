@@ -38,6 +38,7 @@ import java.util.UUID;
 @Service
 public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+    private static final String KAKAO_CONSENT_LANGUAGE = "ko";
 
     private final UserAccountRepository userAccountRepository;
     private final ResponseMapper mapper;
@@ -99,6 +100,7 @@ public class AuthService {
                 + "?response_type=code"
                 + "&client_id=" + encode(kakaoRestApiKey)
                 + "&redirect_uri=" + encode(kakaoRedirectUri)
+                + "&lang=" + encode(KAKAO_CONSENT_LANGUAGE)
                 + "&state=" + encode(state)
                 + scopeParam();
         return URI.create(uri);

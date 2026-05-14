@@ -459,7 +459,7 @@ public class AppointmentService {
             OffsetDateTime now
     ) {
         return switch (scope) {
-            case ALL -> appointmentRepository.findForUser(viewer, from, to);
+            case ALL -> filterByScheduledRange(appointmentRepository.findForUser(viewer), from, to);
             case UPCOMING -> filterByScheduledRange(appointmentRepository.findUpcomingForUser(viewer, now), from, to);
             case HISTORY -> filterByScheduledRange(appointmentRepository.findHistoryForUser(viewer, now), from, to);
         };
