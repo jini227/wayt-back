@@ -42,6 +42,16 @@ class AuthServiceReturnUriTests {
                 .hasMessageContaining("Unsupported returnUri scheme");
     }
 
+    @Test
+    void uniqueWaytIdKeepsKoreanNicknameAsBase() {
+        AuthService service = authService();
+
+        String waytId = ReflectionTestUtils.invokeMethod(service, "uniqueWaytId", "민수");
+
+        assertThat(waytId).startsWith("@민수");
+        assertThat(waytId).doesNotStartWith("@user");
+    }
+
     private AuthService authService() {
         AuthService service = new AuthService(mock(UserAccountRepository.class), mock(ResponseMapper.class));
         ReflectionTestUtils.setField(service, "kakaoRestApiKey", "test-rest-api-key");

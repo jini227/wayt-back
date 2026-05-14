@@ -39,6 +39,9 @@ import java.util.UUID;
 public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private static final String KAKAO_CONSENT_LANGUAGE = "ko";
+    private static final int WAYT_ID_MAX_LENGTH = 40;
+    private static final int WAYT_ID_RANDOM_SUFFIX_LENGTH = 6;
+    private static final int WAYT_ID_MAX_BASE_LENGTH = WAYT_ID_MAX_LENGTH - 1 - WAYT_ID_RANDOM_SUFFIX_LENGTH;
 
     private final UserAccountRepository userAccountRepository;
     private final ResponseMapper mapper;
@@ -266,9 +269,12 @@ public class AuthService {
 
     private String uniqueWaytId(String nickname) {
         String base = nickname.toLowerCase(Locale.ROOT)
-                .replaceAll("[^a-z0-9]", "");
+                .replaceAll("[^\\p{L}\\p{N}]", "");
         if (base.isBlank()) {
-            base = "user";
+            base = "wayt";
+        }
+        if (base.length() > WAYT_ID_MAX_BASE_LENGTH) {
+            base = base.substring(0, WAYT_ID_MAX_BASE_LENGTH);
         }
 
         for (int i = 0; i < 20; i++) {
@@ -277,7 +283,7 @@ public class AuthService {
                 return candidate;
             }
         }
-        return "@user_" + randomSuffix(8);
+        return "@wayt_" + randomSuffix(8);
     }
 
     private String randomSuffix(int bytes) {
