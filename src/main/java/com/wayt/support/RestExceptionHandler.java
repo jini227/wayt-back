@@ -6,6 +6,8 @@ import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 
 import java.time.OffsetDateTime;
 import java.util.Map;
@@ -44,6 +46,16 @@ public class RestExceptionHandler {
                 "status", 400,
                 "error", "Bad Request",
                 "message", "입력값이 저장 가능한 범위를 넘었어요. 내용을 줄여 다시 시도해 주세요."
+        ));
+    }
+
+    @ExceptionHandler({MultipartException.class, MaxUploadSizeExceededException.class})
+    ResponseEntity<Map<String, Object>> handleMultipartException(Exception exception) {
+        return ResponseEntity.badRequest().body(Map.of(
+                "timestamp", OffsetDateTime.now(),
+                "status", 400,
+                "error", "Bad Request",
+                "message", "Profile image must be 5MB or smaller."
         ));
     }
 
