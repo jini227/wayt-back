@@ -157,6 +157,7 @@ public class AuthService {
                 .findByProviderAndProviderUserId(AuthProvider.KAKAO, providerUserId)
                 .map(existing -> {
                     log.info("Kakao user already exists: providerUserId={}, userId={}", providerUserId, existing.getId());
+                    regenerateWaytIdIfNeeded(existing);
                     return existing;
                 })
                 .orElseGet(() -> userAccountRepository.save(new UserAccount(
@@ -263,16 +264,16 @@ public class AuthService {
         return new AuthDtos.AuthResponse(mapper.user(user), issueToken(user, "access"), issueToken(user, "refresh"));
     }
 
+    @Transactional
     public UserResponse session(String authorization) {
-        return mapper.user(authenticatedUser(authorization));
+        UserAccount user = authenticatedUser(authorization);
+        regenerateWaytIdIfNeeded(user);
+        return mapper.user(user);
     }
 
     private String uniqueWaytId(String nickname) {
         String base = nickname.toLowerCase(Locale.ROOT)
-                .replaceAll("[^\\p{L}\\p{N}]", "");
-        if (base.isBlank()) {
-            base = "wayt";
-        }
+                .replaceAll("[^a-z0-9]", "");
         if (base.length() > WAYT_ID_MAX_BASE_LENGTH) {
             base = base.substring(0, WAYT_ID_MAX_BASE_LENGTH);
         }
@@ -283,7 +284,24 @@ public class AuthService {
                 return candidate;
             }
         }
-        return "@wayt_" + randomSuffix(8);
+        return "@" + randomSuffix(8);
+    }
+
+    private void regenerateWaytIdIfNeeded(UserAccount user) {
+        if (!shouldRegenerateWaytId(user.getWaytId())) {
+            return;
+        }
+        user.changeWaytId(uniqueWaytId(user.getNickname()));
+    }
+
+    private boolean shouldRegenerateWaytId(String waytId) {
+        if (waytId == null || !waytId.matches("@[a-z0-9_]+")) {
+            return true;
+        }
+        return waytId.matches("@user[0-9a-f]{6}")
+                || waytId.matches("@user_[0-9a-f]{16}")
+                || waytId.matches("@wayt[0-9a-f]{6}")
+                || waytId.matches("@wayt_[0-9a-f]{16}");
     }
 
     private String randomSuffix(int bytes) {
@@ -387,13 +405,28 @@ public class AuthService {
 
         String path = uri.getPath();
         if (("http".equals(scheme) || "https".equals(scheme))
-                && "52.79.233.46".equals(uri.getHost())
-                && path != null
-                && ("/wayt".equals(path) || path.startsWith("/wayt/"))) {
+                && isAllowedProductionWebReturnUri(uri, path)) {
+            return;
+        }
+
+        if (("http".equals(scheme) || "https".equals(scheme))
+                && isAllowedLocalWebReturnUri(uri, path)) {
             return;
         }
 
         throw ApiException.badRequest("Unsupported returnUri scheme");
+    }
+
+    private boolean isAllowedProductionWebReturnUri(URI uri, String path) {
+        return "52.79.233.46".equals(uri.getHost())
+                && path != null
+                && ("/wayt".equals(path) || path.startsWith("/wayt/"));
+    }
+
+    private boolean isAllowedLocalWebReturnUri(URI uri, String path) {
+        String host = uri.getHost();
+        return ("localhost".equals(host) || "127.0.0.1".equals(host) || "::1".equals(host) || "[::1]".equals(host))
+                && "/auth/kakao".equals(path);
     }
 
     private String encode(String value) {
