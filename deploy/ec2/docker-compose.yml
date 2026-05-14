@@ -1,0 +1,56 @@
+services:
+  wayt-db:
+    image: postgres:16-alpine
+    container_name: wayt-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    command:
+      - postgres
+      - -c
+      - shared_buffers=32MB
+      - -c
+      - max_connections=20
+    volumes:
+      - wayt_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 160m
+
+  wayt-back:
+    image: wayt-back:latest
+    container_name: wayt-back
+    restart: unless-stopped
+    depends_on:
+      wayt-db:
+        condition: service_healthy
+    ports:
+      - "19191:19191"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      PORT: "19191"
+      DATABASE_URL: jdbc:postgresql://wayt-db:5432/${POSTGRES_DB}
+      DATABASE_USERNAME: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      WAYT_PUBLIC_BASE_URL: ${WAYT_PUBLIC_BASE_URL}
+      KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
+      KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI}
+      KAKAO_SCOPES: ${KAKAO_SCOPES:-}
+      NAVER_MAPS_NCP_KEY_ID: ${NAVER_MAPS_NCP_KEY_ID:-}
+      NAVER_MAPS_NCP_KEY: ${NAVER_MAPS_NCP_KEY:-}
+      NAVER_SEARCH_CLIENT_ID: ${NAVER_SEARCH_CLIENT_ID:-}
+      NAVER_SEARCH_CLIENT_SECRET: ${NAVER_SEARCH_CLIENT_SECRET:-}
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
+    volumes:
+      - wayt_uploads:/app/data/uploads
+    mem_limit: 384m
+
+volumes:
+  wayt_pgdata:
+  wayt_uploads:

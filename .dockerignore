@@ -1,0 +1,10 @@
+.git
+.gradle
+build/classes
+build/generated
+build/reports
+build/test-results
+build/tmp
+*.log
+.env
+.env.local

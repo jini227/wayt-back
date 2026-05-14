@@ -373,9 +373,19 @@ public class AuthService {
 
         URI uri = URI.create(returnUri);
         String scheme = uri.getScheme();
-        if (!"exp".equals(scheme) && !"wayt".equals(scheme)) {
-            throw ApiException.badRequest("Unsupported returnUri scheme");
+        if ("exp".equals(scheme) || "wayt".equals(scheme)) {
+            return;
         }
+
+        String path = uri.getPath();
+        if (("http".equals(scheme) || "https".equals(scheme))
+                && "52.79.233.46".equals(uri.getHost())
+                && path != null
+                && ("/wayt".equals(path) || path.startsWith("/wayt/"))) {
+            return;
+        }
+
+        throw ApiException.badRequest("Unsupported returnUri scheme");
     }
 
     private String encode(String value) {
