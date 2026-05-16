@@ -6,6 +6,8 @@ import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 
@@ -56,6 +58,16 @@ public class RestExceptionHandler {
                 "status", 400,
                 "error", "Bad Request",
                 "message", "Profile image must be 5MB or smaller."
+        ));
+    }
+
+    @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
+    ResponseEntity<Map<String, Object>> handleNotFound(Exception exception) {
+        return ResponseEntity.status(404).body(Map.of(
+                "timestamp", OffsetDateTime.now(),
+                "status", 404,
+                "error", "Not Found",
+                "message", "Resource not found"
         ));
     }
 
