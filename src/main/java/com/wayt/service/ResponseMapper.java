@@ -69,6 +69,15 @@ public class ResponseMapper {
     }
 
     public AppointmentDtos.AppointmentResponse appointment(Appointment appointment, UserAccount viewer) {
+        boolean isParticipant = viewer != null && participantRepository.existsByAppointmentAndUserAccountAndMembershipStatus(
+                appointment,
+                viewer,
+                ParticipantMembershipStatus.ACTIVE
+        );
+        return appointment(appointment, viewer, isParticipant);
+    }
+
+    public AppointmentDtos.AppointmentResponse appointment(Appointment appointment, UserAccount viewer, boolean isParticipant) {
         List<AppointmentDtos.ParticipantResponse> participants = participantRepository
                 .findByAppointmentAndMembershipStatusOrderByJoinedAtAsc(
                         appointment,
@@ -85,13 +94,15 @@ public class ResponseMapper {
                 .map(this::statusLog)
                 .toList();
 
-        var myRole = participantRepository.findByAppointmentAndUserAccountAndMembershipStatus(
-                        appointment,
-                        viewer,
-                        ParticipantMembershipStatus.ACTIVE
-                )
-                .map(Participant::getRole)
-                .orElse(null);
+        var myRole = viewer == null || !isParticipant
+                ? null
+                : participantRepository.findByAppointmentAndUserAccountAndMembershipStatus(
+                                appointment,
+                                viewer,
+                                ParticipantMembershipStatus.ACTIVE
+                        )
+                        .map(Participant::getRole)
+                        .orElse(null);
 
         return new AppointmentDtos.AppointmentResponse(
                 appointment.getId(),
@@ -109,6 +120,7 @@ public class ResponseMapper {
                 appointment.getCompletedAt(),
                 appointment.getCompletionReason(),
                 myRole,
+                isParticipant,
                 participants,
                 logs
         );

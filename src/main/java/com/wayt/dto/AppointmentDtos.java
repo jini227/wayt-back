@@ -89,6 +89,7 @@ public final class AppointmentDtos {
             OffsetDateTime completedAt,
             AppointmentCompletionReason completionReason,
             ParticipantRole myRole,
+            boolean isParticipant,
             List<ParticipantResponse> participants,
             List<StatusLogResponse> statusLogs
     ) {

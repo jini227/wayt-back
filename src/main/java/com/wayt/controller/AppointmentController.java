@@ -75,6 +75,14 @@ public class AppointmentController {
         return appointmentService.get(authorization, appointmentId);
     }
 
+    @GetMapping("/{appointmentId}/public")
+    AppointmentDtos.AppointmentResponse publicGet(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+            @PathVariable UUID appointmentId
+    ) {
+        return appointmentService.getPublic(authorization, appointmentId);
+    }
+
     @PostMapping("/{appointmentId}/leave")
     AppointmentDtos.AppointmentResponse leave(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,

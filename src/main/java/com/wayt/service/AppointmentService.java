@@ -169,6 +169,18 @@ public class AppointmentService {
     }
 
     @Transactional(readOnly = true)
+    public AppointmentDtos.AppointmentResponse getPublic(String authorization, UUID appointmentId) {
+        Appointment appointment = findAppointment(appointmentId);
+        UserAccount viewer = optionalAuthenticatedUser(authorization);
+        boolean isParticipant = viewer != null && participantRepository.existsByAppointmentAndUserAccountAndMembershipStatus(
+                appointment,
+                viewer,
+                ParticipantMembershipStatus.ACTIVE
+        );
+        return mapper.appointment(appointment, viewer, isParticipant);
+    }
+
+    @Transactional(readOnly = true)
     public AppointmentDtos.AppointmentResponse get(UUID appointmentId) {
         Appointment appointment = findAppointment(appointmentId);
         return mapper.appointment(appointment, defaultUser());
@@ -387,6 +399,18 @@ public class AppointmentService {
                 .orElseGet(() -> userAccountRepository.findAll().stream()
                         .findFirst()
                         .orElseThrow(() -> ApiException.notFound("No user exists yet")));
+    }
+
+    private UserAccount optionalAuthenticatedUser(String authorization) {
+        if (authorization == null || authorization.isBlank()) {
+            return null;
+        }
+
+        try {
+            return authService.authenticatedUser(authorization);
+        } catch (ApiException exception) {
+            return null;
+        }
     }
 
     private UserAccount findUserByWaytId(String waytId) {
